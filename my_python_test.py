@@ -13,7 +13,7 @@ class ElectricityPrice(hass.Hass):
   def initialize(self):
     self.log("Initializing ElectricityPrice")
     self.listen_state(self.getChargeThreshold, "input_button.paborja_laddning")
-    self.account = tibber.Account("RNUpLwaH-NgaMcMrfrKqcfNCNaw4VNgNInYWuViWk0Y") # Log in with an access token. All information gets updated here and stored in cache.
+    self.account = tibber.Account("TOKEN") # Log in with an access token. All information gets updated here and stored in cache.
     # These properties are retrieved from cache
     self.log(self.account.name)
     self.log(self.account.user_id)
