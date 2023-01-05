@@ -1,0 +1,13 @@
+---
+hello_world:
+  module: hello
+  class: HelloWorld
+  
+electricity_price:
+    module: my_python_test
+    class: ElectricityPrice
+    amountToCharge: input_number.procent_att_ladda
+    whenToBeReady: input_datetime.laddning_avslutad
+    enableCharger: input_boolean.laddboxenable
+    chargingThresholdValue: input_number.smartchargethreashold
+    myToken: !secret tibberToken
