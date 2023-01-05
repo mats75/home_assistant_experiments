@@ -13,7 +13,7 @@ class ElectricityPrice(hass.Hass):
   def initialize(self):
     self.log("Initializing ElectricityPrice")
     self.listen_state(self.getChargeThreshold, "input_button.paborja_laddning")
-    self.account = tibber.Account("TOKEN") # Log in with an access token. All information gets updated here and stored in cache.
+    self.account = tibber.Account(self.args["myToken"]) # Log in with an access token. All information gets updated here and stored in cache.
     # These properties are retrieved from cache
     self.log(self.account.name)
     self.log(self.account.user_id)
@@ -34,15 +34,22 @@ class ElectricityPrice(hass.Hass):
     arrayOfElpris = np.array([9.99] * 48)
     
     #Calculate how many full hours we need to charge given chanrge effect of 2kW and 64kWh battery
-    ProcentAttLadda = float(self.get_state("input_number.procent_att_ladda"))
-    self.log("ProcentAttLadda: %f", ProcentAttLadda)
-    kWhAttLadda = ProcentAttLadda*64/100
-    TimmarAttLadda = int(round(kWhAttLadda/2,0))
+    chargeUnit = str(self.get_state(self.args["amountToCharge"], attribute="unit_of_measurement"))
+    if chargeUnit == "%":
+      ProcentAttLadda = float(self.get_state(self.args["amountToCharge"]))
+      self.log("ProcentAttLadda: %f", ProcentAttLadda)
+      kWhAttLadda = ProcentAttLadda*64/100
+      TimmarAttLadda = int(round(kWhAttLadda/2,0))
+    elif chargeUnit == "h":
+      TimmarAttLadda = int(self.get_state(self.args["amountToCharge"]))
+    else:
+      self.log("Unknown unit_of_measurement %s at %s", chargeUnit, self.args["amountToCharge"])
+      
     self.log("TimmarAttLadda: %i", TimmarAttLadda)
     
     #In how many hours do we need to be ready 
     nowTime = float(time.time())
-    timeToBeReady = float(self.get_state("input_datetime.laddning_avslutad", attribute="timestamp"))
+    timeToBeReady = float(self.get_state(self.args["whenToBeReady"], attribute="timestamp"))
     hoursUntilToBeReady = int((timeToBeReady - nowTime)/3600)
     #self.log("endTime: %f", endTime)
     #self.log("nowTime: %f", nowTime)
@@ -82,10 +89,10 @@ class ElectricityPrice(hass.Hass):
     chargeThreshold = sortedArrayOfElpris[TimmarAttLadda]
     self.log("chargeThreshold: %f", chargeThreshold)
         
-    self.set_value("input_number.smartchargethreashold", int(chargeThreshold*100))
+    self.set_value(self.args["chargingThresholdValue"], int(chargeThreshold*100))
     
     #Start chanrging
-    self.turn_on("input_boolean.laddboxenable")
+    self.turn_on(self.args["enableCharger"])
     
     #Register callback in timeToBeReady hours
     self.log("Stop charning at %s", dt.datetime.fromtimestamp(timeToBeReady))
@@ -95,7 +102,7 @@ class ElectricityPrice(hass.Hass):
     
   def stopCharging(self, kwargs):
       self.log("stopCharging")
-      self.turn_off("input_boolean.laddboxenable")
+      self.turn_off(self.args["enableCharger"])
 
   def terminate(self):
       self.log("Terminating EletricityPrice")
